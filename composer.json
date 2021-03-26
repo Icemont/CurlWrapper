@@ -1,0 +1,23 @@
+{
+  "name": "icemont/curlwrapper",
+  "description": "Simplest OOP CURL Wrapper.",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Ray Icemont",
+      "email": "ray.icemont@gmail.com"
+    }
+  ],
+  "require": {
+    "php": ">=7.1",
+    "ext-curl": "*",
+    "ext-json": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "Icemont\\cURL\\": "src/"
+    }
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}
