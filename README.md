@@ -11,6 +11,26 @@ Designed to test and work with simple RestFull and JSON APIs and execute simple 
 	$ composer require icemont/curlwrapper
 
 ## Usage
+### Simple POST and GET requests
+
+```php
+
+$curl = new CurlWrapper();
+
+// Executing an empty POST request
+var_dump($curl->request('http://example.com/post', true));
+
+// Add data and execute a POST request with data sending
+$curl->addParam('data', array('foo' => 'bar'));
+$curl->addParam('int', 1);
+var_dump($curl->request('http://example.com/post'));
+
+
+// Reset the data and execute a simple GET request
+$curl->reset();
+var_dump($curl->request('http://example.com/'));
+
+```
 ### Example of new ticket creation via the osTicket API
 
 > **File:** examples/osticket_create_ticket.php
@@ -42,27 +62,6 @@ echo 'Request response code: ' . $api->httpcode . PHP_EOL;
 echo 'Request error string: ' . $api->lasterror . PHP_EOL;
 
 ```
-### Simple POST and GET requests
-
-```php
-
-$curl = new CurlWrapper();
-
-// Executing an empty POST request
-var_dump($curl->request('http://example.com/post', true));
-
-// Add data and execute a POST request with data sending
-$curl->addParam('data', array('foo' => 'bar'));
-$curl->addParam('int', 1);
-var_dump($curl->request('http://example.com/post'));
-
-
-// Reset the data and execute a simple GET request
-$curl->reset();
-var_dump($curl->request('http://example.com/'));
-
-```
-
 ## Contact
 
 Open an issue on GitHub if you have any problems or suggestions.
