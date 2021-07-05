@@ -16,8 +16,16 @@ class CurlWrapper
 {
     public $httpcode;
     public $lasterror;
+
     private $params = [];
     private $headers = [];
+
+    private $config = [
+        'user_agent' => 'Mozilla/5.0 (compatible; CurlWrapper/1.1; +https://github.com/Icemont/CurlWrapper)',
+        'timeout' => 30,
+        'referer' => false,
+    ];
+
 
     /**
      * Adding new parameters for POST request.
@@ -76,15 +84,58 @@ class CurlWrapper
     }
 
     /**
+     * Setting Timeout for future requests
+     *
+     * @param int $timeout
+     * @return void
+     */
+    public function setTimeout(int $timeout): void
+    {
+        if ($timeout) {
+            $this->config['timeout'] = $timeout;
+        } else {
+            throw new InvalidArgumentException('The parameter must be an integer greater than 0!');
+        }
+    }
+
+    /**
+     * Setting User-Agent for future requests
+     *
+     * @param string $user_agent
+     * @return void
+     */
+    public function setUserAgent(string $user_agent): void
+    {
+        $this->config['user_agent'] = $user_agent;
+    }
+
+    /**
+     * Setting Referer for future requests
+     *
+     * @param string $referer
+     * @return void
+     */
+    public function setReferer(string $referer): void
+    {
+        if (preg_match('|^http[s]?://|i', $referer)) {
+            $this->config['referer'] = $referer;
+        } elseif (empty($referer)) {
+            $this->config['referer'] = false;
+        } else {
+            throw new InvalidArgumentException('The parameter must be a link or an empty string to reset the value!');
+        }
+    }
+
+    /**
      * Executes the request.
      * Request is always executed as POST if the parameter array is not empty.
      *
-     * @param $url
+     * @param string $url
      * @param bool $post_request make a POST request
      * @param bool $as_json send POST request as JSON
      * @return bool|string
      */
-    public function request($url, $post_request = false, $as_json = false)
+    public function request(string $url, bool $post_request = false, bool $as_json = false)
     {
         $headers = array();
         if ($as_json && !in_array('Content-Type: application/json', $this->headers)) {
@@ -104,7 +155,11 @@ class CurlWrapper
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_TIMEOUT, $this->config['timeout']);
+        curl_setopt($ch, CURLOPT_USERAGENT, $this->config['user_agent']);
+        if ($this->config['referer']) {
+            curl_setopt($ch, CURLOPT_REFERER, $this->config['referer']);
+        }
         if (count($this->params)) {
             curl_setopt($ch, CURLOPT_POST, true);
             if ($as_json) {

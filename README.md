@@ -11,9 +11,40 @@ Designed to test and work with simple RestFull and JSON APIs and execute simple 
 	$ composer require icemont/curlwrapper
 
 ## Usage
-### Simple POST and GET requests
+### Example POST request with custom header and data
 
+> **File:** examples/simple_request.php
 ```php
+use Icemont\cURL\CurlWrapper;
+
+$curl = new CurlWrapper();
+
+/*
+ * Changing the configuration parameters
+ */
+$curl->setTimeout(5);
+$curl->setUserAgent('Mozilla/5.0 (compatible; CurlWrapper/1.1)');
+$curl->setReferer('https://example.com/');
+
+/*
+ * Adding the header and parameters
+ */
+$curl->addHeader('API-Key: TEST_KEY');
+$curl->addParam('test', 'value');
+$curl->addParam('param2', 'value2');
+
+/**
+ * Executing the query
+ */
+var_dump($curl->request('https://httpbin.org/post'));
+
+echo 'Request response code: ' . $curl->httpcode . PHP_EOL;
+echo 'Request error string: ' . $curl->lasterror . PHP_EOL;
+```
+
+### Simple POST and GET requests
+```php
+use Icemont\cURL\CurlWrapper;
 
 $curl = new CurlWrapper();
 
@@ -36,6 +67,7 @@ var_dump($curl->request('http://example.com/'));
 > **File:** examples/osticket_create_ticket.php
 
 ```php
+use Icemont\cURL\CurlWrapper;
 
 $api = new CurlWrapper();
 
