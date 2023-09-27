@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Example of simple POST request using "Icemont/CurlWrapper".
  *
@@ -15,22 +17,24 @@ use Icemont\cURL\CurlWrapper;
 $curl = new CurlWrapper();
 
 /*
- * Changing the configuration parameters
+ * Preparing request
  */
-$curl->setTimeout(5);
-$curl->setUserAgent('Mozilla/5.0 (compatible; CurlWrapper/1.1)');
-$curl->setReferer('https://example.com/');
-/*
- * Adding the header and parameters
- */
-$curl->addHeader('API-Key: TEST_KEY');
-$curl->addParam('test', 'value');
-$curl->addParam('param2', 'value2');
+
+$curl->setTimeout(5)
+    ->setUserAgent('Mozilla/5.0 (compatible; CurlWrapper/2.0)')
+    ->setReferer('https://example.com/')
+    ->addHeader('API-Key: TEST_KEY')
+    ->addData('test', 'value')
+    ->addData('param2', 'value2')
+    ->addDataFromArray([
+        'fromArray1' => 'valueA',
+        'fromArray2' => 'valueB',
+    ]);
 
 /**
  * Executing the query
  */
-var_dump($curl->request('https://httpbin.org/post'));
+var_dump($curl->postRequest('https://httpbin.org/post'));
 
-echo 'Request response code: ' . $curl->httpcode . PHP_EOL;
-echo 'Request error string: ' . $curl->lasterror . PHP_EOL;
+echo 'Request response code: ' . $curl->getLastCode() . PHP_EOL;
+echo 'Request error string: ' . $curl->getLastError() . PHP_EOL;

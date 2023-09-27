@@ -20,26 +20,28 @@ use Icemont\cURL\CurlWrapper;
 $curl = new CurlWrapper();
 
 /*
- * Changing the configuration parameters
+ * Preparing request
  */
-$curl->setTimeout(5);
-$curl->setUserAgent('Mozilla/5.0 (compatible; CurlWrapper/1.1)');
-$curl->setReferer('https://example.com/');
 
-/*
- * Adding the header and parameters
- */
-$curl->addHeader('API-Key: TEST_KEY');
-$curl->addParam('test', 'value');
-$curl->addParam('param2', 'value2');
+$curl->setTimeout(5)
+     ->setUserAgent('Mozilla/5.0 (compatible; CurlWrapper/2.0)')
+     ->setReferer('https://example.com/')
+     ->addHeader('API-Key: TEST_KEY')
+     ->addData('test', 'value')
+     ->addData('param2', 'value2')
+     ->addDataFromArray([
+        'fromArray1' => 'valueA',
+        'fromArray2' => 'valueB',
+    ]);
 
 /**
  * Executing the query
  */
-var_dump($curl->request('https://httpbin.org/post'));
+var_dump($curl->postRequest('https://httpbin.org/post'));
 
-echo 'Request response code: ' . $curl->httpcode . PHP_EOL;
-echo 'Request error string: ' . $curl->lasterror . PHP_EOL;
+echo 'Request response code: ' . $curl->getLastCode() . PHP_EOL;
+echo 'Request error string: ' . $curl->getLastError() . PHP_EOL;
+
 ```
 
 ### Simple POST and GET requests
@@ -49,17 +51,20 @@ use Icemont\cURL\CurlWrapper;
 $curl = new CurlWrapper();
 
 // Executing an empty POST request
-var_dump($curl->request('http://example.com/post', true));
+var_dump($curl->postRequest('https://httpbin.org/post'));
 
 // Add data and execute a POST request with data sending
-$curl->addParam('data', array('foo' => 'bar'));
-$curl->addParam('int', 1);
-var_dump($curl->request('http://example.com/post'));
+$curl->addData('value', 'test')
+     ->addData('int', 1);
+var_dump($curl->postRequest('https://httpbin.org/post'));
 
 
-// Reset the data and execute a simple GET request
+// Execute a simple GET request (data will be added as Query String)
+var_dump($curl->getRequest('https://httpbin.org/get'));
+
+// Reset the data and execute a simple GET request again
 $curl->reset();
-var_dump($curl->request('http://example.com/'));
+var_dump($curl->getRequest('https://httpbin.org/get'));
 
 ```
 ### Example of new ticket creation via the osTicket API
@@ -71,27 +76,34 @@ use Icemont\cURL\CurlWrapper;
 
 $api = new CurlWrapper();
 
-// Adding named query parameters one by one
-$api->addHeader('X-API-Key: YOUR_API_KEY');
-$api->addParam('alert', true);
-$api->addParam('autorespond', true);
-$api->addParam('source', 'API');
-$api->addParam('name', 'Test User');
-$api->addParam('email', 'user@example.com');
-$api->addParam('ip', '127.0.0.1');
+/**
+ * Adding data one by one
+ */
+$api->addHeader('X-API-Key: YOUR_API_KEY')
+    ->addData('alert', true)
+    ->addData('autorespond', true)
+    ->addData('source', 'API')
+    ->addData('name', 'Test User')
+    ->addData('email', 'user@example.com')
+    ->addData('ip', '127.0.0.1');
 
-// Or immediately in the array
-$params = ['subject' => 'Testing API', 'message' => 'MESSAGE HERE'];
-$api->addParam(false, $params);
+/**
+ * Or immediately in the array
+ */
+$data = [
+    'subject' => 'Testing API',
+    'message' => 'MESSAGE HERE',
+];
 
+$api->addDataFromArray($data);
 
-//Executing the query as JSON
+/**
+ * Executing the query as JSON
+ */
 var_dump($api->jsonRequest('https://support.example.com/api/tickets.json'));
 
-// Print the response code
-echo 'Request response code: ' . $api->httpcode . PHP_EOL;
-// Print the error string
-echo 'Request error string: ' . $api->lasterror . PHP_EOL;
+echo 'Request response code: ' . $api->getLastCode() . PHP_EOL;
+echo 'Request error string: ' . $api->getLastError() . PHP_EOL;
 
 ```
 ## Contact

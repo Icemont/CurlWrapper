@@ -14,141 +14,125 @@ use InvalidArgumentException;
 
 class CurlWrapper
 {
-    public $httpcode;
-    public $lasterror;
+    private int $lastCode;
 
-    private $params = [];
-    private $headers = [];
+    private string $lastError;
 
-    private $config = [
-        'user_agent' => 'Mozilla/5.0 (compatible; CurlWrapper/1.1; +https://github.com/Icemont/CurlWrapper)',
+    private array $data = [];
+
+    private array $headers = [];
+
+    private array $config = [
+        'user_agent' => 'Mozilla/5.0 (compatible; CurlWrapper/2.0; +https://github.com/Icemont/CurlWrapper)',
         'timeout' => 30,
         'referer' => false,
     ];
 
-
-    /**
-     * Adding new parameters for POST request.
-     * If no parameter name is specified the new array with values does not override previously set values with matching parameter names.
-     *
-     * @param mixed $param_name parameter name
-     * @param mixed $param_value parameter value(s)
-     * @return void
-     */
-    public function addParam($param_name, $param_value): void
-    {
-        if ($param_name !== false && $param_name !== null) {
-            $this->params[$param_name] = $param_value;
-        } elseif (is_array($param_value)) {
-            $this->params += $param_value;
-        } else {
-            throw new InvalidArgumentException('The parameter must have a name or be an array!');
-        }
-    }
-
-    /**
-     * Adds new headers to future requests.
-     *
-     * @param string $new_header
-     * @return void
-     */
-    public function addHeader(string $new_header): void
-    {
-        if (!empty($new_header)) {
-            $this->headers[] = $new_header;
-        } else {
-            throw new InvalidArgumentException('The header cannot be empty!');
-        }
-    }
-
-    /**
-     * Resets all previously set parameters and headers.
-     *
-     * @return void
-     */
-    public function reset(): void
-    {
-        $this->params = array();
-        $this->headers = array();
-    }
-
-    /**
-     * Alias for $this->request to send POST request as JSON.
-     *
-     * @param $url
-     * @return mixed
-     */
-    public function jsonRequest($url)
+    public function jsonRequest(string $url): bool|string
     {
         return $this->request($url, true, true);
     }
 
-    /**
-     * Setting Timeout for future requests
-     *
-     * @param int $timeout
-     * @return void
-     */
-    public function setTimeout(int $timeout): void
+    public function postRequest(string $url): bool|string
     {
-        if ($timeout) {
-            $this->config['timeout'] = $timeout;
-        } else {
-            throw new InvalidArgumentException('The parameter must be an integer greater than 0!');
+        return $this->request($url, true);
+    }
+
+    public function getRequest(string $url): bool|string
+    {
+        return $this->request($url);
+    }
+
+    public function addData(string $key, string $value): static
+    {
+        $this->data[$key] = $value;
+
+        return $this;
+    }
+
+    public function addDataFromArray(array $data): static
+    {
+        $this->data = array_merge($this->data, $data);
+
+        return $this;
+    }
+
+    public function addHeader(string $header): static
+    {
+        if (empty($header)) {
+            throw new InvalidArgumentException('The header cannot be empty');
         }
+
+        $this->headers[] = $header;
+
+        return $this;
     }
 
-    /**
-     * Setting User-Agent for future requests
-     *
-     * @param string $user_agent
-     * @return void
-     */
-    public function setUserAgent(string $user_agent): void
+    public function reset(): void
     {
-        $this->config['user_agent'] = $user_agent;
+        $this->data = [];
+        $this->headers = [];
     }
 
-    /**
-     * Setting Referer for future requests
-     *
-     * @param string $referer
-     * @return void
-     */
-    public function setReferer(string $referer): void
+    public function setTimeout(int $timeout): static
     {
-        if (preg_match('|^http[s]?://|i', $referer)) {
-            $this->config['referer'] = $referer;
-        } elseif (empty($referer)) {
-            $this->config['referer'] = false;
-        } else {
-            throw new InvalidArgumentException('The parameter must be a link or an empty string to reset the value!');
+        if ($timeout <= 0) {
+            throw new InvalidArgumentException('The parameter must be an integer greater than 0');
         }
+
+        $this->config['timeout'] = $timeout;
+
+        return $this;
     }
 
-    /**
-     * Executes the request.
-     * Request is always executed as POST if the parameter array is not empty.
-     *
-     * @param string $url
-     * @param bool $post_request make a POST request
-     * @param bool $as_json send POST request as JSON
-     * @return bool|string
-     */
-    public function request(string $url, bool $post_request = false, bool $as_json = false)
+    public function setUserAgent(string $userAgent): static
     {
-        $headers = array();
-        if ($as_json && !in_array('Content-Type: application/json', $this->headers)) {
+        $this->config['user_agent'] = $userAgent;
+
+        return $this;
+    }
+
+    public function setReferer(string $referer): static
+    {
+        if (!preg_match('|^http[s]?://|i', $referer)) {
+            throw new InvalidArgumentException('The referer parameter must be a link');
+        }
+
+        $this->config['referer'] = $referer;
+
+        return $this;
+    }
+
+    public function resetReferer(): static
+    {
+        $this->config['referer'] = false;
+
+        return $this;
+    }
+
+    private function request(string $url, bool $asPostRequest = false, bool $asJson = false): bool|string
+    {
+        $headers = $this->headers;
+
+        if ($asJson && !in_array('Content-Type: application/json', $this->headers)) {
             $headers[] = 'Content-Type: application/json';
         }
 
-        if (count($this->headers)) {
-            foreach ($this->headers as $q_header) {
-                $headers[] = $q_header;
+        $ch = curl_init();
+
+        if ($asPostRequest) {
+            curl_setopt($ch, CURLOPT_POST, true);
+
+            if ($asJson) {
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($this->data));
+            } else {
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $this->data);
             }
+        } elseif (count($this->data)) {
+            $url = rtrim($url, '?&');
+            $url .= (str_contains($url, '?') ? '&' : '?') . http_build_query($this->data);
         }
 
-        $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_VERBOSE, false);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
@@ -157,33 +141,30 @@ class CurlWrapper
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, $this->config['timeout']);
         curl_setopt($ch, CURLOPT_USERAGENT, $this->config['user_agent']);
+
         if ($this->config['referer']) {
             curl_setopt($ch, CURLOPT_REFERER, $this->config['referer']);
         }
-        if (count($this->params)) {
-            curl_setopt($ch, CURLOPT_POST, true);
-            if ($as_json) {
-                $post_data = json_encode($this->params);
-            } else {
-                $post_data = $this->params;
-            }
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
-        } elseif ($post_request) {
-            curl_setopt($ch, CURLOPT_POST, true);
-        }
+
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
         $response = curl_exec($ch);
 
-        $this->httpcode = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-        $this->lasterror = curl_error($ch);
+        $this->lastCode = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        $this->lastError = curl_error($ch);
 
         curl_close($ch);
 
-        if ($response) {
-            return $response;
-        }
+        return $response;
+    }
 
-        return false;
+    public function getLastCode(): int
+    {
+        return $this->lastCode;
+    }
+
+    public function getLastError(): string
+    {
+        return $this->lastError;
     }
 }
