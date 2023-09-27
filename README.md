@@ -80,8 +80,6 @@ $api = new CurlWrapper();
  * Adding data one by one
  */
 $api->addHeader('X-API-Key: YOUR_API_KEY')
-    ->addData('alert', true)
-    ->addData('autorespond', true)
     ->addData('source', 'API')
     ->addData('name', 'Test User')
     ->addData('email', 'user@example.com')
@@ -90,12 +88,12 @@ $api->addHeader('X-API-Key: YOUR_API_KEY')
 /**
  * Or immediately in the array
  */
-$data = [
+$api->addDataFromArray([
+    'alert' => true,
+    'autorespond' => true,
     'subject' => 'Testing API',
     'message' => 'MESSAGE HERE',
-];
-
-$api->addDataFromArray($data);
+]);
 
 /**
  * Executing the query as JSON
@@ -104,7 +102,6 @@ var_dump($api->jsonRequest('https://support.example.com/api/tickets.json'));
 
 echo 'Request response code: ' . $api->getLastCode() . PHP_EOL;
 echo 'Request error string: ' . $api->getLastError() . PHP_EOL;
-
 ```
 ## Contact
 
