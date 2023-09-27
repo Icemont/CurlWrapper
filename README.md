@@ -55,7 +55,7 @@ var_dump($curl->postRequest('https://httpbin.org/post'));
 
 // Add data and execute a POST request with data sending
 $curl->addData('value', 'test')
-     ->addData('int', 1);
+     ->addData('value2', 'test2');
 var_dump($curl->postRequest('https://httpbin.org/post'));
 
 
