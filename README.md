@@ -1,6 +1,7 @@
 # CurlWrapper
 
-[![Version](https://poser.pugx.org/icemont/curlwrapper/version)](//packagist.org/packages/icemont/curlwrapper)
+[![Latest Stable Version](http://poser.pugx.org/icemont/curlwrapper/v)](https://packagist.org/packages/icemont/curlwrapper)
+[![PHP Version Require](http://poser.pugx.org/icemont/curlwrapper/require/php)](https://packagist.org/packages/icemont/curlwrapper)
 [![License](https://poser.pugx.org/icemont/curlwrapper/license)](//packagist.org/packages/icemont/curlwrapper)
 
 The simplest and smallest OOP wrapper for PHP cURL **with no overhead**.  
